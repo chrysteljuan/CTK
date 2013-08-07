@@ -402,3 +402,19 @@ qint64 ctk::msecsTo(const QDateTime& t1, const QDateTime& t2)
   return static_cast<qint64>(utcT1.daysTo(utcT2)) * static_cast<qint64>(1000*3600*24)
       + static_cast<qint64>(utcT1.time().msecsTo(utcT2.time()));
 }
+
+//-----------------------------------------------------------------------------
+QFileInfo ctk::composePath(const QStringList& svbdirectory)
+{
+  qDebug()<< "svbdirectory.size" << svbdirectory.size();
+  QVector<QFileInfo> fileInfo;
+  fileInfo.resize(svbdirectory.size());
+  int i=0;
+  fileInfo[0].setFile(QDir(svbdirectory.at(0)), svbdirectory.at(1));
+  for(i = 1 ; i <= svbdirectory.size()-2; i++)
+    {
+    fileInfo[i].setFile(fileInfo[i-1].filePath(),svbdirectory.at(i+1));
+    qDebug()<<fileInfo[i].filePath();
+    }
+    return fileInfo[(svbdirectory.size()-2)].filePath();
+}

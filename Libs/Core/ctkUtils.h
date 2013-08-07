@@ -22,10 +22,12 @@
 #define __ctkUtils_h
 
 // Qt includes
+#include <QFileinfo>
 #include <QStringList>
 #include <QDateTime>
 
 // STD includes
+#include <iostream>
 #include <vector>
 
 #include "ctkCoreExport.h"
@@ -149,6 +151,8 @@ QString CTK_CORE_EXPORT qtHandleToString(Qt::HANDLE handle);
 /// a QDateTime::msecsTo() method which should be used instead, after
 /// bumping the minimum required Qt version for CTK.
 qint64 CTK_CORE_EXPORT msecsTo(const QDateTime& t1, const QDateTime& t2);
+
+QFileInfo CTK_CORE_EXPORT composePath(const QStringList& svbdirectory);
 
 }
 
