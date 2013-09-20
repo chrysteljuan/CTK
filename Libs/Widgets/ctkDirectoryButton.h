@@ -128,6 +128,16 @@ public:
   const Options& options()const;
 #endif
 
+  /// Set/get the ExcludeReadOnly option.
+  /// You can filter out the read only folder in the QFileDialog created in browse().
+  /// QFileDialog::ReadOnly (http://qt-project.org/doc/qt-5.0/qtwidgets/qfiledialog.html#Option-enum) allows
+  /// to filter if the name of the folder can be edited or not.
+  /// ExcludeReadOnly allows to filter out the folder if it's not writable.
+  /// QDir::setFilter() or QFileDialog::setFilter() are not good option because they just applied file names.
+  /// (see this link for more explication https://bugreports.qt-project.org/browse/QTBUG-10244)
+  void setReadOnlyExcluded(bool exclude);
+  bool readOnlyExcluded() const;
+
 public Q_SLOTS:
   /// browse() opens a pop up where the user can select a new directory for the
   /// button. browse() is automatically called when the button is clicked.
@@ -146,6 +156,7 @@ Q_SIGNALS:
   /// the current directory.
   /// \sa directoryChanged
   void directorySelected(const QString&);
+
 protected:
   QScopedPointer<ctkDirectoryButtonPrivate> d_ptr;
 

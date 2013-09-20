@@ -20,8 +20,10 @@
 
 // Qt includes
 #include <QDebug>
+#include <QFileSystemModel>
 #include <QHBoxLayout>
 #include <QPushButton>
+#include <QSortFilterProxyModel>
 #include <QStyle>
 
 // CTK includes
@@ -51,6 +53,7 @@ public:
 #endif
   // TODO expose DisplayAbsolutePath into the API
   bool         DisplayAbsolutePath;
+  bool         ExcludeReadOnlyFolder;
 };
 
 //-----------------------------------------------------------------------------
@@ -63,6 +66,7 @@ ctkDirectoryButtonPrivate::ctkDirectoryButtonPrivate(ctkDirectoryButton& object)
   this->DialogOptions = ctkDirectoryButton::ShowDirsOnly;
 #endif
   this->DisplayAbsolutePath = true;
+  this->ExcludeReadOnlyFolder = false;
 }
 
 //-----------------------------------------------------------------------------
@@ -229,19 +233,57 @@ const ctkDirectoryButton::Options& ctkDirectoryButton::options()const
 }
 
 //-----------------------------------------------------------------------------
-void ctkDirectoryButton::browse()
+void ctkDirectoryButton::setReadOnlyExcluded(bool exclude)
 {
   Q_D(ctkDirectoryButton);
-  QString dir =
-    QFileDialog::getExistingDirectory(
-      this,
-      d->DialogCaption.isEmpty() ? this->toolTip() : d->DialogCaption,
-      d->Directory.path(),
-#ifdef USE_QFILEDIALOG_OPTIONS
-      d->DialogOptions);
-#else
-      QFlags<QFileDialog::Option>(int(d->DialogOptions)));
-#endif
+  d->ExcludeReadOnlyFolder = exclude;
+}
+
+//-----------------------------------------------------------------------------
+bool ctkDirectoryButton::readOnlyExcluded() const
+{
+  Q_D(const ctkDirectoryButton);
+  return d->ExcludeReadOnlyFolder;
+}
+
+//-----------------------------------------------------------------------------
+void ctkDirectoryButton::browse()
+{
+    class ExcludeReadonlyFilterProxyModel : public QSortFilterProxyModel
+      {
+      public:
+        ExcludeReadonlyFilterProxyModel(QObject *parent):QSortFilterProxyModel(parent)
+        {
+        }
+        virtual bool filterAcceptsRow(int source_row, const QModelIndex & source_parent) const
+        {
+          QString filePath =
+              this->sourceModel()->data(sourceModel()->index(source_row, 0, source_parent),
+              QFileSystemModel::FilePathRole).toString();
+          return QFileInfo(filePath).isWritable();
+        }
+      };
+
+  Q_D(ctkDirectoryButton);
+  QScopedPointer<QFileDialog> fileDialog(
+          new QFileDialog(this, d->DialogCaption.isEmpty() ? this->toolTip() :
+          d->DialogCaption, d->Directory.path()));
+  #ifdef USE_QFILEDIALOG_OPTIONS
+    fileDialog->setOptions(d->DialogOptions);
+  #else
+    fileDialog->setOptions(QFlags<QFileDialog::Option>(int(d->DialogOptions)));
+  #endif
+    fileDialog->setFileMode(QFileDialog::DirectoryOnly);
+
+  if (d->ExcludeReadOnlyFolder)
+    {
+    fileDialog->setProxyModel(new ExcludeReadonlyFilterProxyModel(fileDialog.data()));
+    }
+  QString dir;
+  if (fileDialog->exec())
+    {
+    dir = fileDialog->selectedFiles().at(0);
+    }
   // An empty directory means that the user cancelled the dialog.
   if (dir.isEmpty())
     {
