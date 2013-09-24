@@ -70,6 +70,7 @@ public Q_SLOTS:
   /// a slot that can be connected to assure that the user doesn't accept the
   /// dialog if a value is not set in the extra bottom widget.
   void setAcceptButtonEnable(bool enable);
+  void setToggleChooseButton();
 
 Q_SIGNALS:
   /// Signals QFileDialog::file[s]Selected() are fired only when the Ok button

@@ -70,6 +70,15 @@ void ctkFileDialogPrivate::init()
   QObject::connect(this->listView()->selectionModel(),
                    SIGNAL(selectionChanged(QItemSelection,QItemSelection)),
                    q, SLOT(onSelectionChanged()));
+  QObject::connect(this->listView()->selectionModel(),
+                   SIGNAL(selectionChanged(QItemSelection,QItemSelection)),
+                   q, SLOT(setToggleChooseButton()));
+  QFileInfo *fileInfo = new QFileInfo(q->selectedFiles().at(0));
+  bool writable = fileInfo->isWritable();
+  if(q->acceptMode() == ctkFileDialog::AcceptSave || !writable)
+    {
+     this->acceptButton()->setEnabled(writable);
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -175,6 +184,19 @@ void ctkFileDialog::setAcceptButtonEnable(bool enable)
   d->IgnoreEvent = true;
   d->acceptButton()->setEnabled(d->AcceptButtonEnable && d->AcceptButtonState);
   d->IgnoreEvent = false;
+}
+
+//------------------------------------------------------------------------------
+void ctkFileDialog::setToggleChooseButton()
+{
+  Q_D(ctkFileDialog);
+  QFileInfo *fileInfo = new QFileInfo(this->selectedFiles().at(0));
+  bool writable = fileInfo->isWritable();
+  if(this->acceptMode() == 1)
+    {
+    d->acceptButton()->setEnabled(writable);
+    }
+  return;
 }
 
 //------------------------------------------------------------------------------
