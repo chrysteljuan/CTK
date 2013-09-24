@@ -28,6 +28,7 @@
 
 // CTK includes
 #include "ctkDirectoryButton.h"
+#include "ctkFileDialog.h"
 
 //-----------------------------------------------------------------------------
 class ctkDirectoryButtonPrivate
@@ -249,41 +250,19 @@ void ctkDirectoryButton::setAcceptMode(QFileDialog::AcceptMode mode)
 //-----------------------------------------------------------------------------
 void ctkDirectoryButton::browse()
 {
-  // See https://bugreports.qt-project.org/browse/QTBUG-10244
-  class ExcludeReadOnlyFilterProxyModel : public QSortFilterProxyModel
-  {
-  public:
-    ExcludeReadOnlyFilterProxyModel(QObject *parent):QSortFilterProxyModel(parent)
-    {
-    }
-    virtual bool filterAcceptsRow(int source_row, const QModelIndex & source_parent) const
-    {
-      QString filePath =
-          this->sourceModel()->data(sourceModel()->index(source_row, 0, source_parent),
-          QFileSystemModel::FilePathRole).toString();
-      return QFileInfo(filePath).isWritable();
-    }
-  };
 
   Q_D(ctkDirectoryButton);
-  QScopedPointer<QFileDialog> fileDialog(
-          new QFileDialog(this, d->DialogCaption.isEmpty() ? this->toolTip() :
+  QScopedPointer<ctkFileDialog> fileDialog(
+          new ctkFileDialog(this, d->DialogCaption.isEmpty() ? this->toolTip() :
           d->DialogCaption, d->Directory.path()));
   #ifdef USE_QFILEDIALOG_OPTIONS
     fileDialog->setOptions(d->DialogOptions);
   #else
-    fileDialog->setOptions(QFlags<QFileDialog::Option>(int(d->DialogOptions)));
+    fileDialog->setOptions(QFlags<ctkFileDialog::Option>(int(d->DialogOptions)));
   #endif
     fileDialog->setAcceptMode(d->AcceptMode);
     fileDialog->setFileMode(QFileDialog::DirectoryOnly);
 
-  if (d->AcceptMode == QFileDialog::AcceptSave)
-    {
-    // Ideally "Choose" button of QFileDialog should be disabled if a read-only folder
-    // is selected and the acceptMode was AcceptSave.
-    // This is captured in https://github.com/commontk/CTK/issues/365
-    fileDialog->setProxyModel(new ExcludeReadOnlyFilterProxyModel(fileDialog.data()));
-    }
 
   QString dir;
   if (fileDialog->exec())

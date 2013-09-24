@@ -42,6 +42,9 @@ public:
   ctkFileDialogPrivate(ctkFileDialog& object);
   void init();
   void observeAcceptButton();
+  /// Is connected to the Signal selectionChanged(), if the object is in ctkFileDialog::AcceptSave mode
+  /// and if the folder is writable or not it toggles the choose button.
+  void toggleAcceptButton();
 
   QPushButton* acceptButton()const;
   QListView* listView()const;
@@ -70,6 +73,7 @@ void ctkFileDialogPrivate::init()
   QObject::connect(this->listView()->selectionModel(),
                    SIGNAL(selectionChanged(QItemSelection,QItemSelection)),
                    q, SLOT(onSelectionChanged()));
+  this->toggleAcceptButton();
 }
 
 //------------------------------------------------------------------------------
@@ -104,6 +108,19 @@ void ctkFileDialogPrivate::observeAcceptButton()
   // double click on the file, the dialog will be accepted, that event should
   // be intercepted as well
   button->installEventFilter(q);
+}
+
+//------------------------------------------------------------------------------
+void ctkFileDialogPrivate::toggleAcceptButton()
+{
+  Q_Q(ctkFileDialog);
+  if(q->acceptMode() == ctkFileDialog::AcceptSave)
+    {
+    //q->setAcceptButtonEnable(QFileInfo(q->selectedFiles().at(0)).isWritable()); it's not working the way we want
+    //choose button is disable when we click on readonly but it stays disable.
+    this->acceptButton()->setEnabled(QFileInfo(q->selectedFiles().at(0)).isWritable());
+    }
+  return;
 }
 
 //------------------------------------------------------------------------------
@@ -207,6 +224,8 @@ bool ctkFileDialog::eventFilter(QObject *obj, QEvent *event)
 //------------------------------------------------------------------------------
 void ctkFileDialog::onSelectionChanged()
 {
+  Q_D(ctkFileDialog);
+  d->toggleAcceptButton();
   emit this->fileSelectionChanged(this->selectedFiles());
 }
 
@@ -220,6 +239,10 @@ void ctkFileDialog::accept()
     if (info.isDir())
       {
       setDirectory(info.absoluteFilePath());
+      return;
+      }
+    if(this->acceptMode() == ctkFileDialog::AcceptSave && !info.isWritable())
+      {
       return;
       }
     }

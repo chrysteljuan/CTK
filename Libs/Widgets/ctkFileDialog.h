@@ -38,6 +38,8 @@ class ctkFileDialogPrivate;
 /// The behavior of the "return" key is the following:
 ///  - it selects the directory written in the line edit or it
 ///  - it accepts the dialog if the directory is already selected.
+/// If the acceptMode() is ctkFileDialog::AcceptSave, the Choose button
+/// will be toggle for writable folder and readable only folder.
 class CTK_WIDGETS_EXPORT ctkFileDialog : public QFileDialog
 {
   Q_OBJECT
